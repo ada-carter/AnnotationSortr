@@ -5,8 +5,8 @@ Top-level screen for managing and selecting projects.
 
 import pathlib
 
-from PyQt6.QtCore import Qt, pyqtSignal, QKeySequence, QSize
-from PyQt6.QtGui import QIcon, QPixmap, QShortcut
+from PyQt6.QtCore import Qt, pyqtSignal, QSize
+from PyQt6.QtGui import QIcon, QPixmap, QShortcut, QKeySequence
 from PyQt6.QtWidgets import (
     QApplication, QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton,
     QListWidget, QListWidgetItem, QFileDialog, QInputDialog, QMessageBox, QMenu

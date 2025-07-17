@@ -9,8 +9,8 @@ import time
 from collections import deque
 from dataclasses import dataclass
 
-from PyQt6.QtCore import Qt, QTimer, QThreadPool, pyqtSignal, QKeySequence
-from PyQt6.QtGui import QPixmap, QPainter, QShortcut
+from PyQt6.QtCore import Qt, QTimer, QThreadPool, pyqtSignal
+from PyQt6.QtGui import QPixmap, QPainter, QShortcut, QKeySequence
 from PyQt6.QtWidgets import (
     QApplication, QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton,
     QGraphicsView, QGraphicsScene, QGraphicsPixmapItem, QProgressBar,

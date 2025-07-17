@@ -6,8 +6,8 @@ Provides overview and bulk editing of sorted images.
 import pathlib
 import shutil
 
-from PyQt6.QtCore import Qt, pyqtSignal, QKeySequence
-from PyQt6.QtGui import QPixmap, QShortcut
+from PyQt6.QtCore import Qt, pyqtSignal, QTimer
+from PyQt6.QtGui import QPixmap, QShortcut, QKeySequence
 from PyQt6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton, QGridLayout,
     QScrollArea
@@ -122,14 +122,25 @@ class GalleryPage(QWidget):
         grid.setSpacing(15)
         grid.setContentsMargins(15, 15, 15, 15)
         cols = 6
-        for i, (p, st) in enumerate(self.entries):
-            thumb = load_pixmap(p).scaledToHeight(
-                GALLERY_THUMB, Qt.TransformationMode.SmoothTransformation
-            )
-            lbl = ThumbLabel(p, st, thumb)
-            lbl.toggled.connect(self._toggle)
-            r, c = divmod(i, cols)
-            grid.addWidget(lbl, r, c)
+        # Only load and show visible thumbnails for performance (virtualized grid)
+        # For now, just batch-load thumbs in chunks to avoid UI freeze on large sets
+        BATCH_SIZE = 100
+        self._thumb_labels = []
+        def add_thumbs(start=0):
+            end = min(start+BATCH_SIZE, len(self.entries))
+            for i in range(start, end):
+                p, st = self.entries[i]
+                thumb = load_pixmap(p).scaledToHeight(
+                    GALLERY_THUMB, Qt.TransformationMode.SmoothTransformation
+                )
+                lbl = ThumbLabel(p, st, thumb)
+                lbl.toggled.connect(self._toggle)
+                r, c = divmod(i, cols)
+                grid.addWidget(lbl, r, c)
+                self._thumb_labels.append(lbl)
+            if end < len(self.entries):
+                QTimer.singleShot(10, lambda: add_thumbs(end))
+        add_thumbs(0)
 
         scr = QScrollArea()
         scr.setStyleSheet("QScrollArea { background: transparent; border: none; }")

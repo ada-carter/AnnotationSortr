@@ -105,10 +105,32 @@ class MainWindow(QMainWindow):
         page = ProjectPage(base)
         page.back_projects.connect(self._back_projects)
         page.open_class.connect(self._open_sorter)
+        page.open_gallery.connect(self._open_gallery)
         self.stack.addWidget(page)
         self.stack.setCurrentWidget(page)
 
+    def _has_unprocessed_images(self, base: pathlib.Path, cls: str) -> bool:
+        """Check if a class has any unprocessed images."""
+        class_dir = base / cls
+        if not class_dir.exists():
+            return False
+        
+        # Check if there are any images not in keep/review folders
+        for p in class_dir.rglob('*'):
+            if p.is_file() and p.suffix.lower() in IMG_EXTS:
+                rel = p.relative_to(class_dir)
+                if rel.parts and rel.parts[0] in ('keep', 'review'):
+                    continue
+                return True
+        return False
+
     def _open_sorter(self, base: pathlib.Path, cls: str):
+        # Check if there are unprocessed images first
+        if not self._has_unprocessed_images(base, cls):
+            # No unprocessed images, open gallery instead
+            self._open_gallery(base, cls)
+            return
+            
         # refresh labelmap once per open
         labelmap = load_labelmap(base)
         sp = SorterPage(base, cls, labelmap)
@@ -135,20 +157,20 @@ class MainWindow(QMainWindow):
                 w.labelmap = load_labelmap(base)
                 w._populate()
                 self.stack.setCurrentWidget(w)
-                return
-        # not found: create new
+                return        # not found: create new
         self._create_project_page(base)
 
     def _back_projects(self):
         # show projects home
         self.projects_home.reload_projects()
         self.stack.setCurrentWidget(self.projects_home)
-        # clean up other transient widgets
+        # clean up only sorter and gallery pages, preserve project pages
         for i in reversed(range(self.stack.count())):
             w = self.stack.widget(i)
             if w is self.projects_home:
                 continue
-            if isinstance(w, QWidget):
+            # Only remove SorterPage and GalleryPage, keep ProjectPage instances
+            if isinstance(w, (SorterPage, GalleryPage)):
                 self.stack.removeWidget(w)
                 w.deleteLater()
 
